@@ -4,7 +4,7 @@ email: frew@cs.stanford.edu
 description: > # this means to ignore newlines until "baseurl:"
   Thoughts about systems and stuff.
 baseurl: "" # the subpath of your site, e.g. /blog/
-url: "http://frew.github.io" # the base hostname & protocol for your site
+url: "http://blog.rodeo.io" # the base hostname & protocol for your site
 twitter_username: fredwulff
 github_username: frew
 
