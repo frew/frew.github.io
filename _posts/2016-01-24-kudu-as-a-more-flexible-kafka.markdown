@@ -132,4 +132,4 @@ Beyond that, there's some support work that needs to be done before this is some
 
 * It would probably make sense to add a long polling scan call to Kudu to decrease latency while tailing a queue.
 
-I'm interested in working on this, but don't have a compelling production use case for it at present. Interested in this for your use case? Convinced it won't work? [Email](mailto:frew@cs.stanford.edu), comment, or [tweet](https://twitter.com/fredwulff), as is your wont.
+I'm interested in working on this, but don't have a compelling production use case for it at present. Interested in this for your use case? Convinced it won't work? [Email](mailto:frew@cs.stanford.edu), comment, or [tweet](https://twitter.com/fredwulff)!
