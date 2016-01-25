@@ -6,7 +6,7 @@ date:   2016-01-24 13:16:00
 
 Howdy friends!
 
-In this blog post, I show how Kudu, a new key-value store, can be made to function as a more flexible queueing system with nearly as high throughput as Kafka.
+In this blog post, I show how Kudu, a new random-access datastore, can be made to function as a more flexible queueing system with nearly as high throughput as Kafka.
 
 One of the more exciting recent developments in data processing is the rise of high-throughput message queues. Systems like Apache Kafka allow you to share data between different parts of your infrastructure: for example, changes in your production database can be replicated easily and reliably to your full-text search index and your analytics data warehouse, keeping everything in sync. If you're interested in more detail of how this all works, [this tome](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying) is your jam.
 
@@ -25,11 +25,11 @@ The key advantage is that these systems have enough throughput that you can just
 ### What's Apache Kudu?
 ![Kudu logo](/img/kudu_logo_small.png)
 
-[Apache Kudu (incubating)](http://getkudu.io/) is a new sorted key-value store. Its interface is similar to [Google Bigtable](https://cloud.google.com/bigtable/docs/), [Apache HBase](https://hbase.apache.org/), or [Apache Cassandra](https://cassandra.apache.org/). Like those systems, Kudu allows you to distribute the data over many machines and disks to improve availability and performance. Unlike Bigtable and HBase, Kudu layers directly on top of the local filesystem rather than GFS/HDFS. Unlike Cassandra, Kudu implements the [Raft consensus algorithm](https://raft.github.io/) to ensure full consistency between replicas. And unlike all those systems, Kudu uses a new compaction algorithm that's aimed at bounding compaction time rather than minimizing the numbers of files on disk.
+[Apache Kudu (incubating)](http://getkudu.io/) is a new random-access datastore. Its interface is similar to [Google Bigtable](https://cloud.google.com/bigtable/docs/), [Apache HBase](https://hbase.apache.org/), or [Apache Cassandra](https://cassandra.apache.org/). Like those systems, Kudu allows you to distribute the data over many machines and disks to improve availability and performance. Unlike Bigtable and HBase, Kudu layers directly on top of the local filesystem rather than GFS/HDFS. Unlike Cassandra, Kudu implements the [Raft consensus algorithm](https://raft.github.io/) to ensure full consistency between replicas. And unlike all those systems, Kudu uses a new compaction algorithm that's aimed at bounding compaction time rather than minimizing the numbers of files on disk.
 
 ### Kudu as a Kafka replacement
 
-So the proposal is to make Kudu (a sorted key-value store) act like Kafka (a messaging queue). Why would any arguably sane person want to do this? Those of you who aren't familiar with the space but have gamely made it this far are likely wondering what the payoff might be, while those are more familiar are probably remembering posts like [this one](http://www.datastax.com/dev/blog/cassandra-anti-patterns-queues-and-queue-like-datasets) expressly suggesting that doing this is a bad idea.
+So the proposal is to make Kudu (a random-access datastore) act like Kafka (a messaging queue). Why would any arguably sane person want to do this? Those of you who aren't familiar with the space but have gamely made it this far are likely wondering what the payoff might be, while those are more familiar are probably remembering posts like [this one](http://www.datastax.com/dev/blog/cassandra-anti-patterns-queues-and-queue-like-datasets) expressly suggesting that doing this is a bad idea.
 
 Firstly, there are two advantages Kudu can provide as a queue compared to Kafka:
 
@@ -46,7 +46,7 @@ Kafka has replication between brokers, but by default it's asynchronous. The sys
 
 <sup>An inflexible Kudu (source http://bit.ly/1WIxNtL )</sup>
 
-There are many use cases that initially seem like a good fit for Kafka, but that need flexibility that Kafka doesn't provide. A key-value store like Kudu gives more options.
+There are many use cases that initially seem like a good fit for Kafka, but that need flexibility that Kafka doesn't provide. A datastore like Kudu gives more options.
 
 For instance, some applications require processing of infrequent events that require queue modification, which Kafka doesn't provide:
 
@@ -56,13 +56,13 @@ For instance, some applications require processing of infrequent events that req
 
 Many other applications require many independent queues (e.g. one per domain or even one per user).
 
-In practice, Kafka suffers significant bottlenecks as the number of queues increase: leader reassignment latency increases dramatically, memory requirements increase significantly, and many of the metadata APIs become noticeably slower. As the queues become smaller and more numerous, the workload begins to resemble a plain key-value store.
+In practice, Kafka suffers significant bottlenecks as the number of queues increase: leader reassignment latency increases dramatically, memory requirements increase significantly, and many of the metadata APIs become noticeably slower. As the queues become smaller and more numerous, the workload begins to resemble that of a generic random-access datastore.
 
 If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box [reports](http://www.slideshare.net/HBaseCon/dev-session-5a) a peak of only ~1.5K writes/second/node in their presentation and Instagram has given multiple talks about the Cassandra-tunning heroics required).
 
 #### Reasons disadvantages don't render this insane
 
-Happily, Kudu doesn't have many of the disadvantages of other sorted key-value stores when it comes to queue-based workloads:
+Happily, Kudu doesn't have many of the disadvantages of other datastores when it comes to queue-based workloads:
 
 * Unlike Cassandra, Kudu doesn't require a lengthy tombstone period holding onto deleted queue entries.
 
@@ -120,16 +120,20 @@ Given that this is unoptimized and with 1/6th the hard drive bandwidth of the Ka
 
 ### Reasons you might not want to do this in production just yet/Further work
 
-First off, the change above isn't committed to Apache Kudu. It breaks the abstraction between the consensus layer and the key-value storage layer. That's a tradeoff that's probably only worth making if this is something that people actively want. If you have a matching use case and you'd be interested in trying out Kudu for it, I'd love to hear from you: [email me](mailto:frew@cs.stanford.edu).
+First off, the change above isn't committed to Apache Kudu. It breaks the abstraction between the consensus layer and the random-access storage layer. That's a tradeoff that's probably only worth making if this is something that people actively want. If you have a matching use case and you'd be interested in trying out Kudu for it, I'd love to hear from you: [email me](mailto:frew@cs.stanford.edu).
 
-Secondly, Apache Kudu is in beta. Most relevantly, it doesn't have multi-master support yet, so there is a single point of failure in the system. Currently, the team's best guess is that this support is coming [late summer](https://getkudu.slack.com/archives/kudu-general/p1453255802003306), but as in all software development, that's subject to change.
+Secondly, Apache Kudu is in beta. There are two relevant blockers:
+
+ * Kudu doesn't have multi-master support yet, so there is a single point of failure in the system. Currently, the team's best guess is that this support is coming [late summer](https://getkudu.slack.com/archives/kudu-general/p1453255802003306), but as in all software development, that's subject to change.
+
+ * Kudu doesn't yet fully garbage collect tombstone row entries. Unlike Cassandra, there's no architectural necessity for this, but there's [some implementation work](https://issues.cloudera.org/browse/KUDU-236) to be done.
 
 Beyond that, there's some support work that needs to be done before this is something I'd be looking to deploy in production:
 
-* Currently the bottleneck appears to be network bandwidth between two nodes in the cluster: ![chart](/img/bytes_sent.png) vs. an iperf result between the two nodes of 800MB/s with no other resources maxed out. This is likely to be an optimization opportunity for the replication protocol.
+ * Currently the bottleneck appears to be network bandwidth between two nodes in the cluster: ![chart](/img/bytes_sent.png) is a representation of network utilization in MB/s during the test vs. an iperf maximum bandiwdth result between the two nodes of 800MB/s with no other resources maxed out. This is likely to be an optimization opportunity for the replication protocol.
 
-* More generally, the performance testing so far suggests that Kudu is in the same neighborhood as Kafka, but much more rigorous testing would be needed to show the full picture. Since reads and writes are competing for many of the same resources, a full performance test would need to compare read/write workloads. Also, for the smaller queue use case, the test would need to parameterize on Kudu partition sizes as well as number of queues.
+ * More generally, the performance testing so far suggests that Kudu is in the same neighborhood as Kafka, but much more rigorous testing would be needed to show the full picture. Since reads and writes are competing for many of the same resources, a full performance test would need to compare read/write workloads. Also, for the smaller queue use case, the test would need to parameterize on Kudu partition sizes as well as number of queues.
 
-* It would probably make sense to add a long polling scan call to Kudu to decrease latency while tailing a queue.
+ * It would probably make sense to add a long polling scan call to Kudu to decrease latency while tailing a queue.
 
 I'm interested in working on this, but don't have a compelling production use case for it at present. Interested in this for your use case? Convinced it won't work? [Email](mailto:frew@cs.stanford.edu), comment, or [tweet](https://twitter.com/fredwulff)!
