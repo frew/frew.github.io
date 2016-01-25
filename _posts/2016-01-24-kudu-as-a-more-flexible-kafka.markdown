@@ -1,12 +1,16 @@
 ---
 layout: post
-title:  "Apache Kudu as a More Flexible And Reliable Kafka"
+title:  "Apache Kudu as a More Flexible And Reliable Kafka-style Queue"
 date:   2016-01-24 13:16:00
 ---
 
 Howdy friends!
 
-Today I want to chat with you about Apache Kafka, Apache Kudu, and how Kudu can, with slight modifications, become a more flexible and reliable solution for a number of Kafka use cases. I'm going to with a brief review of Kafka and Kudu in their own sections, so feel free to skip down if you already know about them.
+One of the more exciting recent developments in data processing is the rise of high-throughput message queues. Systems like Apache Kafka allow you to share data between different parts of your infrastructure: for example, changes in your production database can be replicated easily and reliably to your full-text search index and your analytics data warehouse, keeping everything in sync. If you're interested in more detail of how this all works, [this tome](https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying) is your jam.
+
+The key advantage is that these systems have enough throughput that you can just replicate everything and let each consumer filter down the data its interested in. But in achieving this goal, Kafka has made some tradeoffs that optimize for throughput over flexibility and availability. This means that many use cases, such as maintaining a queue per-user or modifying queue elements after enqueue, are hard or impossible to implement using Kafka.
+
+In this blog post, I show how Kudu, a new key-value store, can be made to function as a more flexible queueing system with nearly as high throughput as Kafka.
 
 **Contents:**
 
