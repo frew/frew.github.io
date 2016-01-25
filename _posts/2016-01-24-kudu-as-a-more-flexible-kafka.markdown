@@ -25,7 +25,7 @@ Today I want to chat with you about Apache Kafka, Apache Kudu, and how Kudu can,
 
 ### Kudu as a Kafka replacement
 
-So the proposal is to make Kudu (a sorted key-value store) act like Kafka (a messaging queue). Why would any arguably sane person want to do this? Those of you who aren't familiar with the space but have gamely made it this are likely wondering what the payoff might be and those are probably remembering posts like [this one](http://www.datastax.com/dev/blog/cassandra-anti-patterns-queues-and-queue-like-datasets) expressly suggesting that doing this is a bad idea.
+So the proposal is to make Kudu (a sorted key-value store) act like Kafka (a messaging queue). Why would any arguably sane person want to do this? Those of you who aren't familiar with the space but have gamely made it this far are likely wondering what the payoff might be, while those are more familiar are probably remembering posts like [this one](http://www.datastax.com/dev/blog/cassandra-anti-patterns-queues-and-queue-like-datasets) expressly suggesting that doing this is a bad idea.
 
 Firstly, there are two advantages Kudu can provide as a queue compared to Kafka:
 
@@ -54,7 +54,7 @@ Many other applications require many independent queues (e.g. one per domain or 
 
 In practice, Kafka suffers significant bottlenecks as the number of queues increase: leader reassignment latency increases dramatically, memory requirements increase significantly, and many of the metadata APIs become noticeably slower. As the queues become smaller and more numerous, the workload begins to resemble a plain key-value store.
 
-If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box reports a peak of only ~1.5K writes/second in their presentation and Instagram has given multiple talks about the Cassandra-tunning heroics required).
+If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box reports a peak of only ~1.5K writes/second/node in their presentation and Instagram has given multiple talks about the Cassandra-tunning heroics required).
 
 #### Reasons disadvantages don't render this insane
 
@@ -77,7 +77,7 @@ Behind the scenes, `enqueueMessages` needs to assign each message passed in a po
 
 This API suggests that we want our Kudu primary key to be something like `(queue STRING, position INT)`. But how do we find the next position for `enqueueMessage`? If we require the producers submitting the messages to find their own position, it would both be an annoying API to use and likely a performance bottleneck. Luckily, the outcome of the Raft consensus algorithm is a fully ordered log, which gives each message a unique position in its queue.
 
-Specifically, in Kudu's implementation of Raft, the position is encoded as an `OpId`, which is a tuple of `(term, index)`, where `term` is incremented each time a new consensus leader is elected and `index` is incremented each time. There's an additional wrinkle in that each Raft entry can hold multiple row inserts, so we need to add a third int called `offset` to add an ordering within each Raft entry. This means that `(term, index, offset)` monotonically increases with each element and we can use it as our position.
+Specifically, in Kudu's implementation of Raft, the position is encoded as an `OpId`, which is a tuple of `(term, index)`, where `term` is incremented each time a new consensus leader is elected and `index` is incremented each time. There's an additional wrinkle in that each Raft entry can hold multiple row inserts, so we need to add a third int called `offset` to add an arbitrary but consistent ordering within each Raft entry. This means that `(term, index, offset)` monotonically increases with each element and we can use it as our position.
 
 There's an implementation challenge here: the position isn't computed until after we've done the Raft round, but we need to give each message a primary key before we submit the entry to Raft. Fortunately, since the Raft log produced is the same on each replica, we can get around this by submitting the entry with a placeholder value and then substituting in the position whenever we read the entry from the consensus log. The full change is [here](https://github.com/frew/kudu/commit/c3009733d3c977f2f26888079459446836098efa).
 
@@ -120,7 +120,7 @@ First off, the change above isn't committed to Apache Kudu. It breaks the abstra
 
 Secondly, Apache Kudu is in beta. Most relevantly, it doesn't have multi-master support yet, so there is a single point of failure in the system. Currently, the team's best guess is that this support is coming late summer, but as in all software development, that's subject to change.
 
-Work remaining on this:
+Beyond that, there's some support work that needs to be done before this is something I'd be looking to deploy in production:
 
 * Currently the bottleneck appears to be network bandwidth between two nodes in the cluster: ![chart](/img/bytes_sent.png) vs. an iperf result between the two nodes of 800MB/s with no other resources maxed out. This is likely to be an optimization opportunity for the replication protocol.
 
@@ -128,4 +128,4 @@ Work remaining on this:
 
 * It would probably make sense to add a long polling scan call to Kudu to decrease latency while tailing a queue.
 
-I'm interested in working on this, but don't have a compelling use case for it at present. Interested in this for your use case? Convinced it won't work? [Email](mailto:frew@cs.stanford.edu), comment, or [tweet](https://twitter.com/fredwulff), as is your wont.
+I'm interested in working on this, but don't have a compelling production use case for it at present. Interested in this for your use case? Convinced it won't work? [Email](mailto:frew@cs.stanford.edu), comment, or [tweet](https://twitter.com/fredwulff), as is your wont.
