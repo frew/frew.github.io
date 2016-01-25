@@ -31,14 +31,16 @@ Firstly, there are two advantages Kudu can provide as a queue compared to Kafka:
 
 #### Advantage 1: Availability
 
-![a quorum of Kudus courtesy of http://bit.ly/1nghnwf](/img/kudu_quorum.jpg)
+![a quorum of Kudus (source http://bit.ly/1nghnwf )](/img/kudu_quorum.jpg)
 
-<sup>A quorum of Kudus courtesy of http://bit.ly/1nghnwf</sup>
+<sup>A quorum of Kudus (source http://bit.ly/1nghnwf )</sup>
 
 Kafka has replication between brokers, but by default it's asynchronous. The system that it uses to ensure consistency is homegrown and suffers from the problems endemic to achieving consistency on top of an asynchronous replication system. If you're familiar with the different iterations of traditional RDBMS replication systems, the challenges will sound familiar. Comparatively, Kudu's replication is based on the Raft consensus algorithm, which guarantees that as long as you have enough nodes to form a quorum, you'll be able to satisfy reads and writes within a bounded amount of time and a guarantee of a consistent view of the data.
 
 #### Advantage 2: Flexibility
-![an unflexible Kudu courtesy of http://bit.ly/1WIxNtL](/img/kudu_statue.jpg)
+![an unflexible Kudu (source http://bit.ly/1WIxNtL )](/img/kudu_statue.jpg)
+
+<sup>An unflexible Kudu (source http://bit.ly/1WIxNtL )</sup>
 
 There are many use cases that initially seem like a good fit for Kafka, but that need flexibility that Kafka doesn't provide but a key-value store like Kudu does.
 
