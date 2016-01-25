@@ -38,23 +38,23 @@ Firstly, there are two advantages Kudu can provide as a queue compared to Kafka:
 Kafka has replication between brokers, but by default it's asynchronous. The system that it uses to ensure consistency is homegrown and suffers from the problems endemic to achieving consistency on top of an asynchronous replication system. If you're familiar with the different iterations of traditional RDBMS replication systems, the challenges will sound familiar. Comparatively, Kudu's replication is based on the Raft consensus algorithm, which guarantees that as long as you have enough nodes to form a quorum, you'll be able to satisfy reads and writes within a bounded amount of time and a guarantee of a consistent view of the data.
 
 #### Advantage 2: Flexibility
-![an unflexible Kudu (source http://bit.ly/1WIxNtL )](/img/kudu_statue.jpg)
+![an inflexible Kudu (source http://bit.ly/1WIxNtL )](/img/kudu_statue.jpg)
 
-<sup>An unflexible Kudu (source http://bit.ly/1WIxNtL )</sup>
+<sup>An inflexible Kudu (source http://bit.ly/1WIxNtL )</sup>
 
-There are many use cases that initially seem like a good fit for Kafka, but that need flexibility that Kafka doesn't provide but a key-value store like Kudu does.
+There are many use cases that initially seem like a good fit for Kafka, but that need flexibility that Kafka doesn't provide. A key-value store like Kudu gives more options.
 
 For instance, some applications require processing of infrequent events that require queue modification, which Kafka doesn't provide:
 
  * A Twitter firehose-style app needs to be able to process Tweet deletions/edits.
 
- * A system for storing the RDBMS replication logs needs to be able to handle replica promotions, which sometimes requires rewriting history due to lost events.
+ * A system for storing RDBMS replication logs needs to be able to handle replica promotions, which sometimes requires rewriting history due to lost events.
 
 Many other applications require many independent queues (e.g. one per domain or even one per user).
 
 In practice, Kafka suffers significant bottlenecks as the number of queues increase: leader reassignment latency increases dramatically, memory requirements increase significantly, and many of the metadata APIs become noticeably slower. As the queues become smaller and more numerous, the workload begins to resemble a plain key-value store.
 
-If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box reports a peak of only ~1.5K writes/second/node in their presentation and Instagram has given multiple talks about the Cassandra-tunning heroics required).
+If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box [reports](http://www.slideshare.net/HBaseCon/dev-session-5a) a peak of only ~1.5K writes/second/node in their presentation and Instagram has given multiple talks about the Cassandra-tunning heroics required).
 
 #### Reasons disadvantages don't render this insane
 
