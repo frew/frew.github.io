@@ -1,8 +1,7 @@
 ---
 layout: post
 title:  "Apache Kudu as a More Flexible And Reliable Kafka"
-date:   2016-01-23 13:16:00
-published: false
+date:   2016-01-24 13:16:00
 ---
 
 Howdy friends!
