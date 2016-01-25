@@ -6,7 +6,7 @@ date:   2016-01-24 13:16:00
 
 Howdy friends!
 
-Today I want to chat with you about Apache Kafka, Apache Kudu, and how Kudu can, with slight modifications, become a more flexible and reliable solution for a number of Kafka use cases. I'm going to with a brief review of Kafka and Kudu in their own sections, so feel free to skip down if you already know about them. 
+Today I want to chat with you about Apache Kafka, Apache Kudu, and how Kudu can, with slight modifications, become a more flexible and reliable solution for a number of Kafka use cases. I'm going to with a brief review of Kafka and Kudu in their own sections, so feel free to skip down if you already know about them.
 
 **Contents:**
 
@@ -31,13 +31,14 @@ Firstly, there are two advantages Kudu can provide as a queue compared to Kafka:
 
 #### Advantage 1: Availability
 
-![a quorum of Kudus via http://bit.ly/1nghnwf](/img/kudu_quorum.jpg)
+![a quorum of Kudus courtesy of http://bit.ly/1nghnwf](/img/kudu_quorum.jpg)
 
 <sup>A quorum of Kudus courtesy of http://bit.ly/1nghnwf</sup>
 
 Kafka has replication between brokers, but by default it's asynchronous. The system that it uses to ensure consistency is homegrown and suffers from the problems endemic to achieving consistency on top of an asynchronous replication system. If you're familiar with the different iterations of traditional RDBMS replication systems, the challenges will sound familiar. Comparatively, Kudu's replication is based on the Raft consensus algorithm, which guarantees that as long as you have enough nodes to form a quorum, you'll be able to satisfy reads and writes within a bounded amount of time and a guarantee of a consistent view of the data.
 
 #### Advantage 2: Flexibility
+![an unflexible Kudu courtesy of http://bit.ly/1WIxNtL](/img/kudu_statue.jpg)
 
 There are many use cases that initially seem like a good fit for Kafka, but that need flexibility that Kafka doesn't provide but a key-value store like Kudu does.
 
@@ -46,7 +47,7 @@ For instance, some applications require processing of infrequent events that req
  * A Twitter firehose-style app needs to be able to process Tweet deletions/edits.
 
  * A system for storing the RDBMS replication logs needs to be able to handle replica promotions, which sometimes requires rewriting history due to lost events.
- 
+
 Many other applications require many independent queues (e.g. one per domain or even one per user).
 
 In practice, Kafka suffers significant bottlenecks as the number of queues increase: leader reassignment latency increases dramatically, memory requirements increase significantly, and many of the metadata APIs become noticeably slower. As the queues become smaller and more numerous, the workload begins to resemble a plain key-value store.
@@ -61,7 +62,7 @@ Happily, Kudu doesn't have many of the disadvantages of other sorted key-value s
 
 * Unlike Bigtable and HBase, Kudu doesn't have to optimize for large files suitable for storing in GFS-derived filesystem. Its compaction strategy (read section 4.10 of [of the Kudu paper](http://getkudu.io/kudu.pdf) for the gory details), decreases compaction-related overhead for this use case from scaling with the superlinearly with the amount of data put in the queue.
 
-### The mechanics of making Kudu act like a Kafka-style message queue 
+### The mechanics of making Kudu act like a Kafka-style message queue
 
 At a high level, we can think of Kafka as a system that has two endpoints:
 
@@ -107,7 +108,7 @@ b.SetPrimaryKey(keys);
 
 The whole client harness is available [here](https://github.com/frew/kudu/blob/aad51ba69f1b3250155e8977b24fbdce7cc03aea/src/kudu/client/samples/sample.cc).
 
-The results are encouraging. Inserting 16M rows in 1024 row batches sharded across 6 queues took 104 seconds for a total of 161k rows/second. 
+The results are encouraging. Inserting 16M rows in 1024 row batches sharded across 6 queues took 104 seconds for a total of 161k rows/second.
 
 Given that this is unoptimized and with 1/6th the hard drive bandwidth of the Kafka benchmark, it's definitely in the same realm as Kafka's 2 million row/second result.
 
@@ -119,7 +120,7 @@ Secondly, Apache Kudu is in beta. Most relevantly, it doesn't have multi-master 
 
 Work remaining on this:
 
-* Currently the bottleneck appears to be network bandwidth between two nodes in the cluster: ![chart](/img/bytes_sent.png) vs. an iperf result between the two nodes of 800MB/s with no other resources maxed out. This is likely to be an optimization opportunity for the replication protocol. 
+* Currently the bottleneck appears to be network bandwidth between two nodes in the cluster: ![chart](/img/bytes_sent.png) vs. an iperf result between the two nodes of 800MB/s with no other resources maxed out. This is likely to be an optimization opportunity for the replication protocol.
 
 * More generally, the performance testing so far suggests that Kudu is in the same neighborhood as Kafka, but much more rigorous testing would be needed to show the full picture. Since reads and writes are competing for many of the same resources, a full performance test would need to compare read/write workloads. Also, for the smaller queue use case, the test would need to parameterize on Kudu partition sizes as well as number of queues.
 
