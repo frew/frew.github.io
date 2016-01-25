@@ -118,7 +118,7 @@ Given that this is unoptimized and with 1/6th the hard drive bandwidth of the Ka
 
 First off, the change above isn't committed to Apache Kudu. It breaks the abstraction between the consensus layer and the key-value storage layer. That's a tradeoff that's probably only worth making if this is something that people actively want. If you have a matching use case and you'd be interested in trying out Kudu for it, I'd love to hear from you: [email me](mailto:frew@cs.stanford.edu).
 
-Secondly, Apache Kudu is in beta. Most relevantly, it doesn't have multi-master support yet, so there is a single point of failure in the system. Currently, the team's best guess is that this support is coming late summer, but as in all software development, that's subject to change.
+Secondly, Apache Kudu is in beta. Most relevantly, it doesn't have multi-master support yet, so there is a single point of failure in the system. Currently, the team's best guess is that this support is coming [late summer](https://getkudu.slack.com/archives/kudu-general/p1453255802003306), but as in all software development, that's subject to change.
 
 Beyond that, there's some support work that needs to be done before this is something I'd be looking to deploy in production:
 
