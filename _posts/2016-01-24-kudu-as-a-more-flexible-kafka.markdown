@@ -60,7 +60,7 @@ Many other applications require many independent queues (e.g. one per domain or 
 
 In practice, Kafka suffers significant bottlenecks as the number of queues increase: leader reassignment latency increases dramatically, memory requirements increase significantly, and many of the metadata APIs become noticeably slower. As the queues become smaller and more numerous, the workload begins to resemble that of a generic random-access datastore.
 
-If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box [reports](http://www.slideshare.net/HBaseCon/dev-session-5a) a peak of only ~1.5K writes/second/node in their presentation and Instagram has given multiple talks about the Cassandra-tunning heroics required).
+If Kudu can be made to work well for the queue workload, it can bridge these use cases. And indeed, [Instagram](http://www.slideshare.net/planetcassandra/cassandra-summit-2014-cassandra-at-instagram-2014), [Box](http://www.slideshare.net/HBaseCon/dev-session-5a), and others have used HBase or Cassandra for this workload, despite having serious performance penalties compared to Kafka (e.g. Box [reports](http://www.slideshare.net/HBaseCon/dev-session-5a) a peak of only ~1.5K writes/second/node in their presentation and Instagram has given multiple talks about the Cassandra-tuning heroics required).
 
 #### Reasons disadvantages don't render this insane
 
