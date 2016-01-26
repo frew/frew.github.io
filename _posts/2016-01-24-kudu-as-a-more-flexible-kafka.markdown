@@ -66,7 +66,7 @@ Happily, Kudu doesn't have many of the disadvantages of other datastores when it
 
 * Unlike Cassandra, Kudu doesn't require a lengthy tombstone period holding onto deleted queue entries.
 
-* Unlike Bigtable and HBase, Kudu doesn't have to optimize for large files suitable for storing in GFS-derived filesystem. Its compaction strategy (read section 4.10 of [of the Kudu paper](http://getkudu.io/kudu.pdf) for the gory details), decreases compaction-related overhead for this use case from scaling with the superlinearly with the amount of data put in the queue.
+* Unlike Bigtable and HBase, Kudu doesn't have to optimize for large files suitable for storing in GFS-derived filesystem. Its compaction strategy (read section 4.10 of [of the Kudu paper](http://getkudu.io/kudu.pdf) for the gory details) makes the compaction overhead for the queue use-case constant rather than scaling with the overall volume of data in the queue.
 
 ### The mechanics of making Kudu act like a Kafka-style message queue
 
