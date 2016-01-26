@@ -39,6 +39,8 @@ Firstly, there are two advantages Kudu can provide as a queue compared to Kafka:
 
 <sup>A quorum of Kudus (source http://bit.ly/1nghnwf )</sup>
 
+*Update 2016-01-26: As of Kafka 0.8.2+ there's a new configuration option min.insync.replicas that in conjunction with request.required.acks can provide similar guarantees to Raft consensus. More details available (here)[http://www.confluent.io/blog/distributed-consensus-reloaded-apache-zookeeper-and-replication-in-kafka]. Apologies for the confusion, and thanks to Jay Kreps for the clarification.*
+
 Kafka has replication between brokers, but by default it's asynchronous. The system that it uses to ensure consistency is homegrown and suffers from the problems endemic to achieving consistency on top of an asynchronous replication system. If you're familiar with the different iterations of traditional RDBMS replication systems, the challenges will sound familiar. Comparatively, Kudu's replication is based on the Raft consensus algorithm, which guarantees that as long as you have enough nodes to form a quorum, you'll be able to satisfy reads and writes within a bounded amount of time and a guarantee of a consistent view of the data.
 
 #### Advantage 2: Flexibility
