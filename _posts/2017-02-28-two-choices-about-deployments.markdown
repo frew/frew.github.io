@@ -14,7 +14,7 @@ This is essentially a choice of whether to make the change in behavior implicit 
 
 Additional benefits include:
 
-* Feature flags are independent (i.e. we can deploy a revision with changes to feature flag A, B, and C and enable A and C but not B), decreasing the need for a global deploy lock or Git hijinks to isolate changes under deployment.
+* Feature flags are independent (i.e. you can deploy a revision with changes to feature flag A, B, and C and enable A and C but not B), decreasing the need for a global deploy lock or Git hijinks to isolate changes under deployment.
 * They are also easier to test since test frameworks can easily enable/disable feature flags as part of tests.
 * Also, it’s much easier to create a system that quickly enables/disables feature flags than it is to quickly deploy new repository revisions, although some blue/green deploy systems come close.
 
@@ -26,7 +26,7 @@ Downsides of feature flagging include:
 
 To some extent this is mitigated by a smaller set of tooling needs around physical deployments, but unless application developers are fanatically committed to feature flagging all changes (probably past the reasonable cost/benefit tradeoff area of the spectrum), there are still going to be places where the physical deployment matters as well.
 
-### Choice 2: What invariants do we establish about the ways in which code can be deployed?
+### Choice 2: What invariants do you establish about the ways in which code can be deployed?
 
 Even with explicit feature flagging, there are still lots of ways that different code paths can interact unexpectedly.
 
@@ -35,11 +35,11 @@ Even with explicit feature flagging, there are still lots of ways that different
 * A quick fix (e.g. fix.py in Dan’s example) could have not been replicated to the old feature flag path. (code skew)
 * A user can get into a bad state due to a feature flagged path that isn’t resolved by turning off the feature. This is the feature flag version of Dan’s blog post example. (mangled state)
 
-Like concurrency generally, a helpful way we can attack this is by declaring invariants and trying to enforce them, either technically or organizationally. Some invariants that I’ve found useful or interesting in the past:
+Like concurrency generally, a helpful way you can attack this is by declaring invariants and trying to enforce them, either technically or organizationally. Some invariants that I’ve found useful or interesting in the past:
 
 **Sticky feature flags:** We turn feature flags on and off for a particular user rather than a particular request. This decreases the number of times the old code path interacts with the new one.
 
-**One-way sticky feature flags:** A particular user can only become more featureful (i.e. we don’t turn feature flags off for a given user once they’re on). This removes the common case of backward compatibility issues and requires that application developers fix forward mangled state problems.
+**One-way sticky feature flags:** A particular user can only become more featureful (i.e. you don’t turn feature flags off for a given user once they’re on). This removes the common case of backward compatibility issues and requires that application developers fix forward mangled state problems.
 
 **Feature flag testing regime:** I’ve seen both randomized enabling/disabling of feature flags and deployment regimes that require test coverage under both branches of the feature flag before deployment. I tend to be more excited about the latter since one of the main points of feature flagging is to force developers to think about interactions.
 
